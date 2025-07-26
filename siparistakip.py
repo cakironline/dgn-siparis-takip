@@ -114,7 +114,7 @@ st.markdown("""
 bolgeler = oran_df['Bölge'].unique()
 
 for bolge in bolgeler:
-    st.subheader(f"📍 Bölge: {bolge}")
+    st.subheader(f"📍 Bölge: {bolge} E-Ticaret Sipariş Onaylama Raporu")
 
     # 🎨 Açıklama her bölgenin altında
     st.markdown("""
