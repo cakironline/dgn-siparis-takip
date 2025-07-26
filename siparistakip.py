@@ -150,7 +150,6 @@ for bolge in bolgeler:
                     <p>0-1 Gün: {row['0-1 Gün']} adet / %{row['0-1 Gün Oranı (%)']:.2f}</p>
                     <p>1-2 Gün: {row['1-2 Gün']} adet / %{row['1-2 Gün Oranı (%)']:.2f}</p>
                     <p>2+ Gün: {row['2+ Gün']} adet / %{row['2+ Gün Oranı (%)']:.2f}</p>
-                    <p><b>Toplam: {row['Toplam']}</b></p>
                     {alert_icon_html}
                 </div>
                 """, unsafe_allow_html=True
