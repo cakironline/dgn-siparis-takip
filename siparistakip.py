@@ -6,7 +6,7 @@ st.set_page_config(page_title="DGN Sipariş Performansı", layout="wide")
 st.title("📦 Mağaza Sipariş Onaylama Performansı Dashboard")
 
 # 📥 Excel dosyasını oku
-dosya_yolu = r"\\192.168.2.13\Users\Public\Documents\Temmuz.xlsx"
+dosya_yolu = "Temmuz.xlsx"
 df = pd.read_excel(dosya_yolu)
 
 # 🛠️ "4543-3" paketleyen mağaza ismini "Ereğli Mağaza" yapalım
