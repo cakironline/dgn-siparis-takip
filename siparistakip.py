@@ -5,35 +5,32 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="DGN Sipariş Performansı", layout="wide")
 st.title("📦 Mağaza Sipariş Onaylama Performansı Dashboard")
 
-# 📂 Dosya yükle
 dosya_yolu = "Temmuz.xlsx"
 df = pd.read_excel(dosya_yolu)
 
-# 🛠️ Mağaza ismini düzelt
+# 🛠️ "4245-3" paketleyen mağaza ismini "Ereğli Mağaza" yapalım
 df['Paketleyen Mağaza'] = df['Paketleyen Mağaza'].apply(lambda x: "Ereğli Mağaza" if x == "4245-3" else x)
 
 # 📅 Tarihleri işleyelim
 df['Oluşma Tarihi'] = pd.to_datetime(df['Oluşma Tarihi'])
 df['Paketleme Tarihi'] = pd.to_datetime(df['Paketleme Tarihi'])
 
-# 🗓️ Zaman filtresi ve gösterim kontrolü
-st.sidebar.header("📆 Zaman Filtresi")
-zaman_tipi = st.sidebar.radio("Veri Türü", ["Yıllık", "Aylık"])
+# Üstte filtre: Yıllık / Aylık ve Ay seçimi
+donem_tipi = st.sidebar.selectbox("Dönem Tipi Seçin", ["Yıllık", "Aylık"])
 
-# Ay haritası
-ay_map = {
-    "Ocak": 1, "Şubat": 2, "Mart": 3, "Nisan": 4,
-    "Mayıs": 5, "Haziran": 6, "Temmuz": 7, "Ağustos": 8,
-    "Eylül": 9, "Ekim": 10, "Kasım": 11, "Aralık": 12
-}
+secili_aylar = []
+if donem_tipi == "Aylık":
+    aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+    ay_secimi = st.sidebar.multiselect("Ay Seçiniz", aylar, default=aylar)
+    # Ay isimlerini ay numarasına çevir
+    ay_dict = {ad: i+1 for i, ad in enumerate(aylar)}
+    secili_aylar = [ay_dict[ay] for ay in ay_secimi]
+else:
+    secili_aylar = list(range(1,13))  # Tüm aylar
 
-if zaman_tipi == "Aylık":
-    secilen_aylar = st.sidebar.multiselect("Ay Seçiniz", list(ay_map.keys()), default=["Temmuz"])
-    secilen_ay_numaralari = [ay_map[ay] for ay in secilen_aylar]
-    df = df[df['Oluşma Tarihi'].dt.month.isin(secilen_ay_numaralari)]
-
-# ✅ Adetleri göster/gizle kontrolü
-adet_goster = st.sidebar.checkbox("📊 Adetleri Göster", value=False)
+# Filtreleme: Seçilen ayların ortak verisi
+df = df[df['Oluşma Tarihi'].dt.month.isin(secili_aylar)]
 
 # ⏱ Süre hesaplama
 df['Paketleme Süresi (Saat)'] = (df['Paketleme Tarihi'] - df['Oluşma Tarihi']).dt.total_seconds() / 3600
@@ -60,39 +57,12 @@ for col in ['0-1 Gün', '1-2 Gün', '2+ Gün']:
 
 oran_df = oran_df.reset_index()
 
-# 🎨 Renk belirleme
-def kart_renk(orani):
-    if orani >= 97:
-        return '#4CAF50'  # Yeşil
-    elif 95 <= orani < 97:
-        return '#FF9800'  # Turuncu
-    else:
-        return '#F44336'  # Kırmızı
-
-def renk_sirasi(renk):
-    if renk == '#4CAF50':
-        return 0
-    elif renk == '#FF9800':
-        return 1
-    elif renk == '#F44336':
-        return 2
-    return 3
-
 # 💅 CSS tanımları
 st.markdown("""
 <style>
-@keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
-}
 .blinking-alert {
   animation: blink 1s infinite;
   font-size: 28px;
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
 }
 .kart {
   padding: 15px;
@@ -119,7 +89,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 📘 Genel açıklama
+# 📘 Genel açıklama (üstte)
 st.markdown("""
 <div style="margin-bottom: 20px; font-size: 18px;">
     <span class="emoji-label">🟢</span><b>İyi</b> &nbsp;&nbsp;&nbsp;
@@ -129,11 +99,33 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 🔄 Her bölge için kartlar
+# 🔄 Her bölge için kutular
+
+# Adetleri göster/gizle seçeneği
+adet_goster = st.sidebar.checkbox("Adetleri Göster", value=True)
+
+def kart_renk(orani):
+    if orani >= 97:
+        return '#4CAF50'  # Yeşil
+    elif 95 <= orani < 97:
+        return '#FF9800'  # Turuncu
+    else:
+        return '#F44336'  # Kırmızı
+
+def renk_sirasi(renk):
+    if renk == '#4CAF50':
+        return 0
+    elif renk == '#FF9800':
+        return 1
+    elif renk == '#F44336':
+        return 2
+    return 3
+
 bolgeler = oran_df['Bölge'].unique()
 
 for bolge in bolgeler:
     st.subheader(f"📍 Bölge: {bolge}")
+
     st.markdown("""
     <div style="margin-bottom: 10px; font-size: 16px;">
         <div>
@@ -142,7 +134,7 @@ for bolge in bolgeler:
             <span class="emoji-label">🔴</span><b>Kötü</b>
         </div>
         <div style="margin-top: 4px;">
-            <span class="emoji-label">🚨</span><b>İconun Bulunduğu Mağazalarda 2+ Gün Oranı Hedeflenen Oranın Üstündedir.</b>
+            <span class="emoji-label">🚨</span><b>İkonun Bulunduğu Mağazalarda 2+ Gün Oranı Hedeflenen Oranın Üstündedir.</b>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -155,31 +147,20 @@ for bolge in bolgeler:
     cols = st.columns(4)
     for i, row in bolge_df.iterrows():
         renk = row['Renk']
-        alert_icon_html = ""
-        if row.get('2+ Gün Oranı (%)', 0) >= 3:
-            alert_icon_html = '<span style="font-size: 28px; position: absolute; right: 15px; top: 50%; transform: translateY(-50%);">🚨</span>'
+        alert_icon_html = "🚨" if row['2+ Gün Oranı (%)'] >= 3 else ""
 
-        if adet_goster:
-            icerik = f"""
-                <p>0-1 Gün: {int(row.get('0-1 Gün', 0))} adet / %{row.get('0-1 Gün Oranı (%)', 0):.2f}</p>
-                <p>1-2 Gün: {int(row.get('1-2 Gün', 0))} adet / %{row.get('1-2 Gün Oranı (%)', 0):.2f}</p>
-                <p>2+ Gün: {int(row.get('2+ Gün', 0))} adet / %{row.get('2+ Gün Oranı (%)', 0):.2f}</p>
-                <p><b>Toplam: {int(row.get('Toplam', 0))}</b></p>
-            """
-        else:
-            icerik = f"""
-                <p>0-1 Gün: %{row.get('0-1 Gün Oranı (%)', 0):.2f}</p>
-                <p>1-2 Gün: %{row.get('1-2 Gün Oranı (%)', 0):.2f}</p>
-                <p>2+ Gün: %{row.get('2+ Gün Oranı (%)', 0):.2f}</p>
-            """
+        adet_0_1 = f"{row['0-1 Gün']} adet / " if adet_goster else ""
+        adet_1_2 = f"{row['1-2 Gün']} adet / " if adet_goster else ""
+        adet_2_plus = f"{row['2+ Gün']} adet / " if adet_goster else ""
 
         with cols[i % 4]:
             st.markdown(
                 f"""
                 <div class="kart" style="background-color: {renk};">
-                    <h2>{row.get('Paketleyen Mağaza', '')}</h2>
-                    {icerik}
-                    {alert_icon_html}
+                    <h2>{row['Paketleyen Mağaza']} {alert_icon_html}</h2>
+                    <p>0-1 Gün: {adet_0_1}%{row['0-1 Gün Oranı (%)']:.2f}</p>
+                    <p>1-2 Gün: {adet_1_2}%{row['1-2 Gün Oranı (%)']:.2f}</p>
+                    <p>2+ Gün: {adet_2_plus}%{row['2+ Gün Oranı (%)']:.2f}</p>
                 </div>
                 """, unsafe_allow_html=True
             )
