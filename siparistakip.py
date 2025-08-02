@@ -15,7 +15,7 @@ df['Paketleyen Mağaza'] = df['Paketleyen Mağaza'].apply(lambda x: "Ereğli Ma�
 df['Oluşma Tarihi'] = pd.to_datetime(df['Oluşma Tarihi'])
 df['Paketleme Tarihi'] = pd.to_datetime(df['Paketleme Tarihi'])
 
-# 🗓️ Zaman filtresi: Yıllık / Aylık
+# 🗓️ Zaman filtresi ve gösterim kontrolü
 st.sidebar.header("📆 Zaman Filtresi")
 zaman_tipi = st.sidebar.radio("Veri Türü", ["Yıllık", "Aylık"])
 
@@ -30,6 +30,9 @@ if zaman_tipi == "Aylık":
     secilen_aylar = st.sidebar.multiselect("Ay Seçiniz", list(ay_map.keys()), default=["Temmuz"])
     secilen_ay_numaralari = [ay_map[ay] for ay in secilen_aylar]
     df = df[df['Oluşma Tarihi'].dt.month.isin(secilen_ay_numaralari)]
+
+# ✅ Adetleri göster/gizle kontrolü
+adet_goster = st.sidebar.checkbox("📊 Adetleri Göster", value=False)
 
 # ⏱ Süre hesaplama
 df['Paketleme Süresi (Saat)'] = (df['Paketleme Tarihi'] - df['Oluşma Tarihi']).dt.total_seconds() / 3600
@@ -155,15 +158,27 @@ for bolge in bolgeler:
         if row['2+ Gün Oranı (%)'] >= 3:
             alert_icon_html = '<span style="font-size: 28px; position: absolute; right: 15px; top: 50%; transform: translateY(-50%);">🚨</span>'
 
+        # İçerik: oran + isteğe bağlı adet bilgisi
+        if adet_goster:
+            icerik = f"""
+                <p>0-1 Gün: {row['0-1 Gün']} adet / %{row['0-1 Gün Oranı (%)']:.2f}</p>
+                <p>1-2 Gün: {row['1-2 Gün']} adet / %{row['1-2 Gün Oranı (%)']:.2f}</p>
+                <p>2+ Gün: {row['2+ Gün']} adet / %{row['2+ Gün Oranı (%)']:.2f}</p>
+                <p><b>Toplam: {row['Toplam']}</b></p>
+            """
+        else:
+            icerik = f"""
+                <p>0-1 Gün: %{row['0-1 Gün Oranı (%)']:.2f}</p>
+                <p>1-2 Gün: %{row['1-2 Gün Oranı (%)']:.2f}</p>
+                <p>2+ Gün: %{row['2+ Gün Oranı (%)']:.2f}</p>
+            """
+
         with cols[i % 4]:
             st.markdown(
                 f"""
                 <div class="kart" style="background-color: {renk};">
                     <h2>{row['Paketleyen Mağaza']}</h2>
-                    <p>0-1 Gün: {row['0-1 Gün']} adet / %{row['0-1 Gün Oranı (%)']:.2f}</p>
-                    <p>1-2 Gün: {row['1-2 Gün']} adet / %{row['1-2 Gün Oranı (%)']:.2f}</p>
-                    <p>2+ Gün: {row['2+ Gün']} adet / %{row['2+ Gün Oranı (%)']:.2f}</p>
-                    <p><b>Toplam: {row['Toplam']}</b></p>
+                    {icerik}
                     {alert_icon_html}
                 </div>
                 """, unsafe_allow_html=True
