@@ -5,16 +5,31 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="DGN Sipariş Performansı", layout="wide")
 st.title("📦 Mağaza Sipariş Onaylama Performansı Dashboard")
 
-# 📥 Excel dosyasını oku
 dosya_yolu = "Temmuz.xlsx"
 df = pd.read_excel(dosya_yolu)
 
-# 🛠️ "4543-3" paketleyen mağaza ismini "Ereğli Mağaza" yapalım
+# 🛠️ Mağaza ismini düzelt
 df['Paketleyen Mağaza'] = df['Paketleyen Mağaza'].apply(lambda x: "Ereğli Mağaza" if x == "4245-3" else x)
 
 # 📅 Tarihleri işleyelim
 df['Oluşma Tarihi'] = pd.to_datetime(df['Oluşma Tarihi'])
 df['Paketleme Tarihi'] = pd.to_datetime(df['Paketleme Tarihi'])
+
+# 🗓️ Zaman filtresi: Yıllık / Aylık
+st.sidebar.header("📆 Zaman Filtresi")
+zaman_tipi = st.sidebar.radio("Veri Türü", ["Yıllık", "Aylık"])
+
+# Ay haritası
+ay_map = {
+    "Ocak": 1, "Şubat": 2, "Mart": 3, "Nisan": 4,
+    "Mayıs": 5, "Haziran": 6, "Temmuz": 7, "Ağustos": 8,
+    "Eylül": 9, "Ekim": 10, "Kasım": 11, "Aralık": 12
+}
+
+if zaman_tipi == "Aylık":
+    secilen_aylar = st.sidebar.multiselect("Ay Seçiniz", list(ay_map.keys()), default=["Temmuz"])
+    secilen_ay_numaralari = [ay_map[ay] for ay in secilen_aylar]
+    df = df[df['Oluşma Tarihi'].dt.month.isin(secilen_ay_numaralari)]
 
 # ⏱ Süre hesaplama
 df['Paketleme Süresi (Saat)'] = (df['Paketleme Tarihi'] - df['Oluşma Tarihi']).dt.total_seconds() / 3600
@@ -41,7 +56,7 @@ for col in ['0-1 Gün', '1-2 Gün', '2+ Gün']:
 
 oran_df = oran_df.reset_index()
 
-# 🎨 Renk belirleme (sadece 0-1 Gün oranı)
+# 🎨 Renk belirleme
 def kart_renk(orani):
     if orani >= 97:
         return '#4CAF50'  # Yeşil
@@ -100,7 +115,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 📘 Genel açıklama (üstte)
+# 📘 Genel açıklama
 st.markdown("""
 <div style="margin-bottom: 20px; font-size: 18px;">
     <span class="emoji-label">🟢</span><b>İyi</b> &nbsp;&nbsp;&nbsp;
@@ -110,15 +125,13 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 🔄 Her bölge için kutular
+# 🔄 Her bölge için kartlar
 bolgeler = oran_df['Bölge'].unique()
 
 for bolge in bolgeler:
-    st.subheader(f"📍 Bölge: {bolge} E-Ticaret Sipariş Onaylama Raporu")
-
-    # 🎨 Açıklama her bölgenin altında
+    st.subheader(f"📍 Bölge: {bolge}")
     st.markdown("""
-   <div style="margin-bottom: 10px; font-size: 16px;">
+    <div style="margin-bottom: 10px; font-size: 16px;">
         <div>
             <span class="emoji-label">🟢</span><b>İyi</b> &nbsp;&nbsp;&nbsp;
             <span class="emoji-label">🟠</span><b>Orta</b> &nbsp;&nbsp;&nbsp;
@@ -147,9 +160,10 @@ for bolge in bolgeler:
                 f"""
                 <div class="kart" style="background-color: {renk};">
                     <h2>{row['Paketleyen Mağaza']}</h2>
-                    <p>0-1 Gün: %{row['0-1 Gün Oranı (%)']:.2f}</p>
-                    <p>1-2 Gün: %{row['1-2 Gün Oranı (%)']:.2f}</p>
-                    <p>2+ Gün:  %{row['2+ Gün Oranı (%)']:.2f}</p>
+                    <p>0-1 Gün: {row['0-1 Gün']} adet / %{row['0-1 Gün Oranı (%)']:.2f}</p>
+                    <p>1-2 Gün: {row['1-2 Gün']} adet / %{row['1-2 Gün Oranı (%)']:.2f}</p>
+                    <p>2+ Gün: {row['2+ Gün']} adet / %{row['2+ Gün Oranı (%)']:.2f}</p>
+                    <p><b>Toplam: {row['Toplam']}</b></p>
                     {alert_icon_html}
                 </div>
                 """, unsafe_allow_html=True
