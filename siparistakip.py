@@ -142,7 +142,8 @@ for bolge in bolgeler:
     bolge_df = oran_df[oran_df['Bölge'] == bolge].copy()
     bolge_df['Renk'] = bolge_df['0-1 Gün Oranı (%)'].apply(kart_renk)
     bolge_df['Renk Sırası'] = bolge_df['Renk'].apply(renk_sirasi)
-    bolge_df = bolge_df.sort_values(by='Renk Sırası').reset_index(drop=True)
+    bolge_df = bolge_df.sort_values(by=['Renk Sırası', '0-1 Gün Oranı (%)'], ascending=[True, False]).reset_index(drop=True)
+
 
     cols = st.columns(4)
     for i, row in bolge_df.iterrows():
