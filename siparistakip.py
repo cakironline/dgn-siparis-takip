@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="DGN Sipariş Performansı", layout="wide")
 st.title("📦 Mağaza Sipariş Onaylama Performansı Dashboard")
 
+# 📂 Dosya yükle
 dosya_yolu = "Temmuz.xlsx"
 df = pd.read_excel(dosya_yolu)
 
@@ -155,29 +156,28 @@ for bolge in bolgeler:
     for i, row in bolge_df.iterrows():
         renk = row['Renk']
         alert_icon_html = ""
-        if row['2+ Gün Oranı (%)'] >= 3:
+        if row.get('2+ Gün Oranı (%)', 0) >= 3:
             alert_icon_html = '<span style="font-size: 28px; position: absolute; right: 15px; top: 50%; transform: translateY(-50%);">🚨</span>'
 
-        # İçerik: oran + isteğe bağlı adet bilgisi
         if adet_goster:
             icerik = f"""
-                <p>0-1 Gün: {row['0-1 Gün']} adet / %{row['0-1 Gün Oranı (%)']:.2f}</p>
-                <p>1-2 Gün: {row['1-2 Gün']} adet / %{row['1-2 Gün Oranı (%)']:.2f}</p>
-                <p>2+ Gün: {row['2+ Gün']} adet / %{row['2+ Gün Oranı (%)']:.2f}</p>
-                <p><b>Toplam: {row['Toplam']}</b></p>
+                <p>0-1 Gün: {int(row.get('0-1 Gün', 0))} adet / %{row.get('0-1 Gün Oranı (%)', 0):.2f}</p>
+                <p>1-2 Gün: {int(row.get('1-2 Gün', 0))} adet / %{row.get('1-2 Gün Oranı (%)', 0):.2f}</p>
+                <p>2+ Gün: {int(row.get('2+ Gün', 0))} adet / %{row.get('2+ Gün Oranı (%)', 0):.2f}</p>
+                <p><b>Toplam: {int(row.get('Toplam', 0))}</b></p>
             """
         else:
             icerik = f"""
-                <p>0-1 Gün: %{row['0-1 Gün Oranı (%)']:.2f}</p>
-                <p>1-2 Gün: %{row['1-2 Gün Oranı (%)']:.2f}</p>
-                <p>2+ Gün: %{row['2+ Gün Oranı (%)']:.2f}</p>
+                <p>0-1 Gün: %{row.get('0-1 Gün Oranı (%)', 0):.2f}</p>
+                <p>1-2 Gün: %{row.get('1-2 Gün Oranı (%)', 0):.2f}</p>
+                <p>2+ Gün: %{row.get('2+ Gün Oranı (%)', 0):.2f}</p>
             """
 
         with cols[i % 4]:
             st.markdown(
                 f"""
                 <div class="kart" style="background-color: {renk};">
-                    <h2>{row['Paketleyen Mağaza']}</h2>
+                    <h2>{row.get('Paketleyen Mağaza', '')}</h2>
                     {icerik}
                     {alert_icon_html}
                 </div>
